@@ -1,0 +1,233 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resume Skill Matcher</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 25px 16px;
+  font-family: Arial, sans-serif;
+  background: #f4f7ff;
+  color: #172554;
+}
+
+.container {
+  max-width: 900px;
+  margin: auto;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+header h1 {
+  color: #315efb;
+  font-size: 32px;
+}
+
+header p {
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.card {
+  background: white;
+  padding: 22px;
+  border-radius: 16px;
+  box-shadow: 0 6px 25px #17255410;
+}
+
+label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+textarea {
+  width: 100%;
+  min-height: 200px;
+  padding: 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 15px;
+  resize: vertical;
+}
+
+button {
+  width: 100%;
+  margin-top: 22px;
+  padding: 15px;
+  border: none;
+  border-radius: 10px;
+  background: #315efb;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #2348d8;
+}
+
+#result {
+  display: none;
+  margin-top: 24px;
+  padding: 24px;
+  background: white;
+  border-radius: 16px;
+  overflow-wrap: anywhere;
+}
+
+.score {
+  color: #315efb;
+  font-size: 36px;
+  font-weight: bold;
+}
+
+.skill {
+  display: inline-block;
+  margin: 5px;
+  padding: 8px 12px;
+  border-radius: 20px;
+  background: #e8efff;
+  color: #2448b8;
+}
+
+.missing {
+  background: #fff0db;
+  color: #9a5700;
+}
+
+.note {
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.6;
+  margin-top: 22px;
+}
+
+@media (max-width: 650px) {
+  .grid { grid-template-columns: 1fr; }
+  header h1 { font-size: 27px; }
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<header>
+  <h1>Resume Skill Matcher</h1>
+  <p>Compare your resume with a job description<br>
+  and discover skills you may need to improve.</p>
+</header>
+
+<div class="grid">
+  <div class="card">
+    <label for="resume">Your Resume</label>
+    <textarea id="resume"
+      placeholder="Example: I know Java, Python, HTML, CSS and SQL."></textarea>
+  </div>
+
+  <div class="card">
+    <label for="job">Job Description</label>
+    <textarea id="job"
+      placeholder="Example: Required skills include Java, Python, SQL, Git and React."></textarea>
+  </div>
+</div>
+
+<button onclick="analyzeSkills()">Analyze My Skills</button>
+
+<div id="result" aria-live="polite"></div>
+
+<p class="note">
+  Portfolio demo: This tool uses keyword matching, not an AI model.
+  The percentage is a simple estimate, not an official ATS score.
+  Your text is processed in this browser page.
+</p>
+
+</div>
+
+<script>
+function analyzeSkills() {
+  const resume = document.getElementById("resume")
+    .value.toLowerCase();
+
+  const job = document.getElementById("job")
+    .value.toLowerCase();
+
+  if (!resume.trim() || !job.trim()) {
+    alert("Please enter both your resume and job description.");
+    return;
+  }
+
+  const stopWords = new Set([
+    "the", "and", "for", "with", "you", "are",
+    "our", "your", "from", "this", "that", "will",
+    "have", "has", "job", "work", "role", "skills",
+    "skill", "good", "strong", "using", "required"
+  ]);
+
+  function getWords(text) {
+    return [...new Set(
+      text.match(/[a-z][a-z+#.]*/g) || []
+    )].filter(word =>
+      word.length > 1 && !stopWords.has(word)
+    );
+  }
+
+  const resumeWords = new Set(getWords(resume));
+  const jobWords = getWords(job);
+
+  const matched = jobWords.filter(word =>
+    resumeWords.has(word)
+  );
+
+  const missing = jobWords.filter(word =>
+    !resumeWords.has(word)
+  );
+
+  const percentage = jobWords.length
+    ? Math.round(matched.length / jobWords.length * 100)
+    : 0;
+
+  const result = document.getElementById("result");
+  result.style.display = "block";
+
+  function showSkills(words, className = "") {
+    if (words.length === 0) return "<p>None found.</p>";
+
+    return words.map(word =>
+      `<span class="skill ${className}">${word}</span>`
+    ).join("");
+  }
+
+  result.innerHTML = `
+    <div class="score">${percentage}%</div>
+    <p>Estimated keyword overlap</p>
+
+    <h3>Matching Keywords</h3>
+    <div>${showSkills(matched)}</div>
+
+    <h3>Keywords to Review</h3>
+    <div>${showSkills(missing, "missing")}</div>
+  `;
+
+  result.scrollIntoView({ behavior: "smooth" });
+}
+</script>
+</body>
+</html>
